@@ -110,8 +110,58 @@ if [ "$PACKAGE_TYPE" = "rpm" ]; then
 fi
 
 if [ "$PACKAGE_TYPE" = "brew" ]; then
-
-    # create brew package
-    zip $PROJECT_BINARY_DIR/${BREW_PACKAGE_NAME}.zip $PROJECT_BINARY_DIR/jcd $PROJECT_BINARY_DIR/jcd_function.sh
+    
+    if [ -d "${PROJECT_BINARY_DIR}/brew" ]; then
+        rm -rf "${PROJECT_BINARY_DIR}/brew"
+    fi
+    
+    # Create brew package directory
+    mkdir -p "${PROJECT_BINARY_DIR}/brew"
+    
+    # Create staging directory for the package
+    BREW_STAGING_DIR="${PROJECT_BINARY_DIR}/brew/staging"
+    mkdir -p "${BREW_STAGING_DIR}"
+    
+    # Copy files to staging
+    cp "${PROJECT_BINARY_DIR}/jcd" "${BREW_STAGING_DIR}/"
+    cp "${PROJECT_BINARY_DIR}/jcd_function.sh" "${BREW_STAGING_DIR}/"
+    chmod 755 "${BREW_STAGING_DIR}/jcd"
+    chmod 755 "${BREW_STAGING_DIR}/jcd_function.sh"
+    
+    # Create the zip file
+    cd "${BREW_STAGING_DIR}"
+    zip "../${BREW_PACKAGE_NAME}.zip" jcd jcd_function.sh
+    cd - > /dev/null
+    
+    # Generate SHA256 checksum
+    BREW_ZIP_PATH="${PROJECT_BINARY_DIR}/brew/${BREW_PACKAGE_NAME}.zip"
+    if command -v sha256sum >/dev/null 2>&1; then
+        SHA256=$(sha256sum "${BREW_ZIP_PATH}" | cut -d' ' -f1)
+    elif command -v shasum >/dev/null 2>&1; then
+        SHA256=$(shasum -a 256 "${BREW_ZIP_PATH}" | cut -d' ' -f1)
+    else
+        echo "Warning: No SHA256 utility found, using placeholder"
+        SHA256="<SHA256_PLACEHOLDER>"
+    fi
+    
+    # Generate Homebrew formula
+    if [ -f "${CMAKE_SOURCE_DIR}/dist/homebrew/jcd.rb.in" ]; then
+        # Use placeholder URL for now - this would be replaced with actual release URL
+        DOWNLOAD_URL="https://github.com/microsoft/jcd/releases/download/v${PACKAGE_VER}/${BREW_PACKAGE_NAME}.zip"
+        
+        sed -e "s|@DOWNLOAD_URL@|${DOWNLOAD_URL}|g" \
+            -e "s|@SHA256@|${SHA256}|g" \
+            -e "s|@VERSION@|${PACKAGE_VER}|g" \
+            "${CMAKE_SOURCE_DIR}/dist/homebrew/jcd.rb.in" > "${PROJECT_BINARY_DIR}/brew/jcd.rb"
+            
+        echo "Generated Homebrew formula: ${PROJECT_BINARY_DIR}/brew/jcd.rb"
+        echo "ZIP file: ${BREW_ZIP_PATH}"
+        echo "SHA256: ${SHA256}"
+    else
+        echo "Warning: Homebrew formula template not found at ${CMAKE_SOURCE_DIR}/dist/homebrew/jcd.rb.in"
+    fi
+    
+    # Copy the zip to the main directory for compatibility
+    cp "${BREW_ZIP_PATH}" "${PROJECT_BINARY_DIR}/${BREW_PACKAGE_NAME}.zip"
 fi
 exit $RET

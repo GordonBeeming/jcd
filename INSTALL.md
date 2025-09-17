@@ -1,5 +1,41 @@
 # Install jcd
 
+## macOS (Homebrew)
+
+### From Official Tap (Recommended)
+```sh
+brew install jcd
+```
+
+### From Custom Tap
+If using a custom tap:
+```sh
+brew tap <username>/<tapname>
+brew install jcd
+```
+
+### Post-Installation Setup
+After installation, add the following to your shell configuration:
+
+For bash (`~/.bashrc`):
+```sh
+export JCD_BINARY="$(brew --prefix)/bin/jcd"
+source $(brew --prefix)/bin/jcd_function.sh
+```
+
+For zsh (`~/.zshrc`):
+```sh
+export JCD_BINARY="$(brew --prefix)/bin/jcd"
+source $(brew --prefix)/bin/jcd_function.sh
+```
+
+Then reload your shell:
+```sh
+source ~/.bashrc   # or source ~/.zshrc
+```
+
+You can also run `jcd-setup` for setup instructions.
+
 ## Azure Linux 3
 ```sh
 sudo dnf install jcd

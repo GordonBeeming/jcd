@@ -1,0 +1,63 @@
+class Jcd < Formula
+  desc "Enhanced directory navigation tool with substring matching and tab completion cycling"
+  homepage "https://github.com/microsoft/jcd"
+  url "@DOWNLOAD_URL@"
+  sha256 "@SHA256@"
+  version "@VERSION@"
+  license "MIT"
+
+  depends_on "bash" => :build
+
+  def install
+    bin.install "jcd"
+    bin.install "jcd_function.sh"
+    
+    # Create wrapper script for easy sourcing
+    (bin/"jcd-setup").write <<~EOS
+      #!/bin/bash
+      echo "Add the following lines to your ~/.bashrc or ~/.zshrc:"
+      echo "export JCD_BINARY=\"#{bin}/jcd\""
+      echo "source #{bin}/jcd_function.sh"
+      echo ""
+      echo "Then run: source ~/.bashrc (or source ~/.zshrc)"
+    EOS
+    chmod 0755, bin/"jcd-setup"
+  end
+
+  def caveats
+    <<~EOS
+      To use jcd, you need to add the following to your shell configuration:
+
+      For bash (~/.bashrc):
+        export JCD_BINARY="#{bin}/jcd"
+        source #{bin}/jcd_function.sh
+
+      For zsh (~/.zshrc):
+        export JCD_BINARY="#{bin}/jcd"
+        source #{bin}/jcd_function.sh
+
+      Then reload your shell:
+        source ~/.bashrc   # or source ~/.zshrc
+
+      You can also run 'jcd-setup' for setup instructions.
+
+      The shell function integration is required because a Rust binary
+      cannot change the directory of its parent shell process.
+    EOS
+  end
+
+  test do
+    # Test that the binary exists and shows error when no args provided
+    assert_match "Error: No search term provided", shell_output("#{bin}/jcd", 1)
+    
+    # Test that jcd_function.sh exists
+    assert_predicate bin/"jcd_function.sh", :exist?
+    
+    # Test that the shell function can be sourced
+    system "bash", "-c", "source #{bin}/jcd_function.sh"
+    
+    # Test that jcd-setup exists and is executable
+    assert_predicate bin/"jcd-setup", :exist?
+    assert_predicate bin/"jcd-setup", :executable?
+  end
+end

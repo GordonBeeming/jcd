@@ -49,6 +49,62 @@ jcd/
    ./makePackages.sh "$(pwd)" target/release jcd $(VERSION) 0 rpm "$(rpm --eval '%_arch')"
    ```
 
+   Homebrew (macOS):
+   ```
+   ./makePackages.sh . target/release jcd $(VERSION) 0 brew "$(uname -m)"
+   ```
+
+   Or use the brew publish helper script:
+   ```
+   ./brew-publish.sh $(VERSION)
+   ```
+
+## Publishing to Homebrew
+
+### Prerequisites
+- macOS system with Homebrew installed
+- GitHub repository with releases
+- Access to a Homebrew tap repository (optional for custom taps)
+
+### Publishing Process
+
+1. **Build the Homebrew package**:
+   ```bash
+   ./brew-publish.sh 1.0.0
+   ```
+
+2. **Upload the generated ZIP file to your GitHub release**:
+   - The script generates `target/release/brew/jcd-mac-<version>.zip`
+   - Upload this file as a release asset on GitHub
+
+3. **Update the formula with the actual release URL** (if needed):
+   ```bash
+   ./brew-publish.sh 1.0.0 https://github.com/your-repo/jcd/releases/download/v1.0.0/jcd-mac-1.0.0.zip
+   ```
+
+4. **For custom tap publishing**:
+   - Create a repository named `homebrew-<tapname>` (e.g., `homebrew-jcd`)
+   - Create a `Formula/` directory
+   - Copy the generated formula: `cp target/release/brew/jcd.rb /path/to/homebrew-jcd/Formula/`
+   - Commit and push to your tap repository
+
+5. **For official Homebrew Core**:
+   - Submit a pull request to [homebrew-core](https://github.com/Homebrew/homebrew-core)
+   - Follow their contribution guidelines
+
+### Testing the Formula
+
+Users can install from a custom tap:
+```bash
+brew tap username/tapname
+brew install jcd
+```
+
+Or test locally:
+```bash
+brew install --build-from-source target/release/brew/jcd.rb
+```
+
 > **Note**: The shell function integration is **required** because a Rust binary cannot change the directory of its parent shell process. The `jcd_function.sh` wrapper handles this limitation by calling the binary and then changing directories based on its output.
 
 ## Test

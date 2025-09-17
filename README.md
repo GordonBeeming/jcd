@@ -23,6 +23,8 @@
 ## Install
 Please see installation instructions [here](INSTALL.md).
 
+For Homebrew-specific publishing and development information, see [HOMEBREW.md](HOMEBREW.md).
+
 ## Development
 Please see development instructions [here](DEVELOPMENT.md).
 
